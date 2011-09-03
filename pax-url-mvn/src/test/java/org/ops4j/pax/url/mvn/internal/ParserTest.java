@@ -281,5 +281,19 @@ public class ParserTest
                       parser.getArtifactLocalMetdataPath()
         );
     }
+    @Test
+    public void artifactMetadata()
+        throws MalformedURLException 
+    {
+        Parser parser = new Parser( "group/artifact////metadata" );
+        assertEquals( "Group", "group", parser.getGroup() );
+        assertEquals( "Artifact", "artifact", parser.getArtifact() );
+        assertEquals( "Version", "LATEST", parser.getVersion() );
+        assertEquals( "Type", "jar", parser.getType() );
+        assertEquals( "Classifier", null, parser.getClassifier() );
+        assertEquals( "Metadata", "metadata", parser.getMetadata() );
+        assertEquals( "Artifact metadata path", "group/artifact/maven-metadata.xml", parser.getArtifactMetdataPath() );
+        assertEquals( "repository", null, parser.getRepositoryURL() );
+    }
 
 }

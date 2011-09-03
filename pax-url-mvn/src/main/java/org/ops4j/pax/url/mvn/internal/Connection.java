@@ -253,7 +253,8 @@ public class Connection
         }
         final boolean isVersionRange = versionRange != null;
         final boolean isExactVersion = !( isLatest || isSnapshot || isVersionRange );
-
+        final boolean isMetadata = m_parser.getMetadata() != null && m_parser.getMetadata().length() != 0;
+        
         int priority = 0;
         for( MavenRepositoryURL repositoryURL : repositories )
         {
@@ -261,6 +262,12 @@ public class Connection
             priority++;
             try
             {
+                if (isMetadata) 
+                {
+                    downloadables.add( resolveMetadata( repositoryURL, priority ) );
+                    continue;
+                }
+
                 if( isExactVersion )
                 {
                     downloadables.add( resolveExactVersion( repositoryURL, priority ) );
@@ -304,6 +311,35 @@ public class Connection
         return downloadables;
     }
 
+    private DownloadableArtifact resolveMetadata (final MavenRepositoryURL repositoryURL, int priority) throws IOException {
+        LOG.debug( Ix2 + "Resolving metadata" );
+        String[] metadataLocations = new String[]{ m_parser.getArtifactLocalMetdataPath(), m_parser.getArtifactMetdataPath()};
+        
+        for( String location : metadataLocations )
+        {
+            try
+            {
+                // first try to get the artifact local metadata
+                prepareInputStream( repositoryURL.getURL(), location );
+                // get out at first found location
+                LOG.trace( Ix4 + "Metadata found: [" + location + "]" );
+                
+                return new DownloadableArtifact(m_parser.getVersion(),
+                                               priority,
+                                               repositoryURL.getURL(),
+                                               location,
+                                               false, // no local built snapshot
+                                               m_configuration.getCertificateCheck());
+                
+            }
+            catch( IOException ignore )
+            {
+                LOG.trace( Ix4 + "Metadata not found: [" + location + "]" );
+            }
+        }
+        throw new IOException( "Metadata not found in repository [" + repositoryURL + "]" );
+    }
+    
     /**
      * Returns maven metadata by looking first for a local metatdata xml file and then for a remote one.
      * If no metadata file is found or cannot be used an IOException is thrown.

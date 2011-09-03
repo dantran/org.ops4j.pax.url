@@ -33,7 +33,7 @@ public class Parser
     /**
      * Syntax for the url; to be shown on exception messages.
      */
-    private static final String SYNTAX = "mvn:[repository_url!]groupId/artifactId[/[version]/[type]]";
+    private static final String SYNTAX = "mvn:[repository_url!]groupId/artifactId[/[version]/[type]/[metadata]";
 
     /**
      * Separator between repository and artifact definition.
@@ -84,6 +84,8 @@ public class Parser
      * Maven local metadata file.
      */
     private static final String METADATA_FILE_LOCAL = "maven-metadata-local.xml";
+    
+    private static final String METADATA_ID = "metadata";
 
     /**
      * Repository URL. Null if not present.
@@ -113,6 +115,9 @@ public class Parser
      * Artifact classifier to use to build artifact name.
      */
     private String m_fullClassifier;
+    
+    private String m_metadata;
+    
 
     /**
      * Creates a new protocol parser.
@@ -192,6 +197,15 @@ public class Parser
             m_classifier = segments[ 4 ];
             m_fullClassifier = CLASSIFIER_SEPARATOR + m_classifier;
         }
+        // filename is optional
+        m_metadata = "";
+        if ( segments.length >= 6 && segments[5].trim().length() > 0 ) {
+            m_metadata = segments[5];
+            if (!m_metadata.trim().equalsIgnoreCase(  METADATA_ID )) {
+                throw new MalformedURLException( "Invalid metadata. Syntax " + SYNTAX );
+            }
+        }
+
     }
 
     /**
@@ -262,6 +276,10 @@ public class Parser
     public String getArtifactPath()
     {
         return getArtifactPath( m_version );
+    }
+
+    public String getMetadata() {
+        return m_metadata;
     }
 
     /**
@@ -401,5 +419,6 @@ public class Parser
             .append( METADATA_FILE )
             .toString();
     }
+
 
 }
